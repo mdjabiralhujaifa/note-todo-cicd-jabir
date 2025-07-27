@@ -4,7 +4,6 @@ Run these commands:
 #hi
 sudo apt install nodejs
 
-#hi
 sudo apt install npm
 
 
