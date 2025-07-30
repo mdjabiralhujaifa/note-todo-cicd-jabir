@@ -73,8 +73,6 @@ pipeline {
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker stop todo'
-                sh 'docker rm todo'
                 sh 'docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:latest'
                 
             }
