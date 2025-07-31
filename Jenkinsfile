@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
+        BUILD_VERSION = "v${BUILD_NUMBER}" 
     }
 
     stages {
@@ -38,6 +39,7 @@ pipeline {
                 sh "npm install"
             }
         }
+
         stage('OWASP FS SCAN') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
@@ -56,10 +58,9 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        sh "docker build -t todo ."
-                        sh "docker tag todo jabiralhujaifa/todo:latest"
-                        sh "docker push jabiralhujaifa/todo:latest"
-                        
+                        sh "docker build -t todo:${BUILD_VERSION} ." 
+                        sh "docker tag todo:${BUILD_VERSION} jabiralhujaifa/todo:${BUILD_VERSION}" 
+                        sh "docker push jabiralhujaifa/todo:${BUILD_VERSION}" 
                     }
                 }
             }
@@ -67,22 +68,24 @@ pipeline {
 
         stage("TRIVY Image Scan") {
             steps {
-                sh "trivy image jabiralhujaifa/todo:latest > trivy-image-scan.txt"
+                sh "trivy image jabiralhujaifa/todo:${BUILD_VERSION} > trivy-image-scan.txt" 
                 archiveArtifacts artifacts: 'trivy-image-scan.txt', fingerprint: true
             }
         }
-        stage('Deploy to container'){
-            steps{
+
+        stage('Deploy to container') {
+            steps {
                 sh 'docker rm -f todo || true'
-                sh 'docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:latest'
-                
+                sh "docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:${BUILD_VERSION}" 
             }
         }
+
         stage('Deploy to kubernets') {
             steps {
                 script {
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                        sh 'kubectl apply -f deployment.yaml'
+                        // If you use imagePullPolicy: Always in deployment.yaml, no need to change it
+                        sh "kubectl set image deployment/todo-app todo=jabiralhujaifa/todo:${BUILD_VERSION}" 
                     }
                 }
             }
