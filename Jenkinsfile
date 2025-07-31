@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
-        BUILD_VERSION = "v${BUILD_NUMBER}" 
+        BUILD_VERSION = "v${BUILD_NUMBER}"
     }
 
     stages {
@@ -18,13 +18,13 @@ pipeline {
             }
         }
 
-        stage('pull from Git') {
+        stage('Clone GitHub Repo') {
             steps {
                 git branch: 'main', url: 'https://github.com/mdjabiralhujaifa/note-todo-cicd-jabir.git'
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Code Quality Check (SonarQube)') {
             steps {
                 withSonarQubeEnv('sonar-server') {
                     sh '''$SCANNER_HOME/bin/sonar-scanner \
@@ -33,57 +33,51 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
-                sh "npm install"
+                sh 'npm install'
             }
         }
 
-        stage('OWASP FS SCAN') {
+        stage('Security Scan (OWASP & Trivy)') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-
-        stage('TRIVY FS SCAN') {
-            steps {
-                sh "trivy fs . > trivyfs.txt"
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DP-Check'
+                sh 'trivy fs . > trivyfs.txt'
                 archiveArtifacts artifacts: 'trivyfs.txt', fingerprint: true
             }
         }
 
-        stage("Docker Build & Push") {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        sh "docker build -t jabiralhujaifa/todo:${BUILD_VERSION} ." 
-                        sh "docker push jabiralhujaifa/todo:${BUILD_VERSION}" 
+                        sh "docker build -t jabiralhujaifa/todo:${BUILD_VERSION} ."
+                        sh "docker push jabiralhujaifa/todo:${BUILD_VERSION}"
                     }
                 }
             }
         }
 
-        stage("TRIVY Image Scan") {
+        stage('Image Security Scan (Trivy)') {
             steps {
-                sh "trivy image jabiralhujaifa/todo:${BUILD_VERSION} > trivy-image-scan.txt" 
-                archiveArtifacts artifacts: 'trivy-image-scan.txt', fingerprint: true
+                sh "trivy image jabiralhujaifa/todo:${BUILD_VERSION} > trivy-image.txt"
+                archiveArtifacts artifacts: 'trivy-image.txt', fingerprint: true
             }
         }
 
-        stage('Deploy to container') {
+        stage('Run Container Locally') {
             steps {
                 sh 'docker rm -f todo || true'
-                sh "docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:${BUILD_VERSION}" 
+                sh "docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:${BUILD_VERSION}"
             }
         }
 
-        stage('Deploy to kubernets') {
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                        sh "kubectl set image deployment/todo-app todo=jabiralhujaifa/todo:${BUILD_VERSION}" 
+                    withKubeConfig(credentialsId: 'k8s') {
+                        sh "kubectl set image deployment/todo-app todo=jabiralhujaifa/todo:${BUILD_VERSION}"
                     }
                 }
             }
