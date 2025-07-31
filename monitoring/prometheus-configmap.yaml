@@ -19,4 +19,4 @@ data:
 
       - job_name: 'kube-state-metrics'
         static_configs:
-          - targets: ['172.31.81.23:8080']
+          - targets: ['10.109.89.54:8080']
