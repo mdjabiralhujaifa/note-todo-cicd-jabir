@@ -11,6 +11,7 @@ pipeline {
         BUILD_VERSION = "v${BUILD_NUMBER}" 
     }
 
+    
     stages {
         stage('Clean Workspace') {
             steps {
