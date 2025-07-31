@@ -84,7 +84,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                        // If you use imagePullPolicy: Always in deployment.yaml, no need to change it
+    
                         sh "kubectl set image deployment/todo-app todo=jabiralhujaifa/todo:${BUILD_VERSION}" 
                     }
                 }
