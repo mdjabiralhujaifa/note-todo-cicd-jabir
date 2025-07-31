@@ -6,7 +6,7 @@ sudo apt install nodejs
 
 sudo apt install npm
 
-#hello
+#hello J
 sudo npm install
 
 node app.js
