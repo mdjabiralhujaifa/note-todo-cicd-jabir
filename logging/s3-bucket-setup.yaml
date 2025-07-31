@@ -63,8 +63,8 @@ data:
     [OUTPUT]
         Name  s3
         Match *
-        bucket your-s3-bucket-name
-        region your-region
+        bucket jabirk8s
+        region us-east-1
         total_file_size 5M
         upload_timeout 10m
         store_dir /buffers
