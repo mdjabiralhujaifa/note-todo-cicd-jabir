@@ -11,7 +11,6 @@ pipeline {
         BUILD_VERSION = "v${BUILD_NUMBER}" 
     }
 
-    
     stages {
         stage('Clean Workspace') {
             steps {
@@ -59,8 +58,7 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
-                        sh "docker build -t todo:${BUILD_VERSION} ." 
-                        sh "docker tag todo:${BUILD_VERSION} jabiralhujaifa/todo:${BUILD_VERSION}" 
+                        sh "docker build -t jabiralhujaifa/todo:${BUILD_VERSION} ." 
                         sh "docker push jabiralhujaifa/todo:${BUILD_VERSION}" 
                     }
                 }
@@ -85,7 +83,6 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-    
                         sh "kubectl set image deployment/todo-app todo=jabiralhujaifa/todo:${BUILD_VERSION}" 
                     }
                 }
