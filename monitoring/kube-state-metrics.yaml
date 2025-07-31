@@ -1,0 +1,79 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 apiVersion: v1\
+kind: ServiceAccount\
+metadata:\
+  name: kube-state-metrics\
+  namespace: monitoring\
+---\
+apiVersion: rbac.authorization.k8s.io/v1\
+kind: ClusterRole\
+metadata:\
+  name: kube-state-metrics\
+rules:\
+  - apiGroups: [""]\
+    resources:\
+      - pods\
+      - nodes\
+      - namespaces\
+      - services\
+    verbs: ["get", "list", "watch"]\
+  - apiGroups: ["apps"]\
+    resources:\
+      - deployments\
+      - replicasets\
+    verbs: ["get", "list", "watch"]\
+---\
+apiVersion: rbac.authorization.k8s.io/v1\
+kind: ClusterRoleBinding\
+metadata:\
+  name: kube-state-metrics\
+roleRef:\
+  apiGroup: rbac.authorization.k8s.io\
+  kind: ClusterRole\
+  name: kube-state-metrics\
+subjects:\
+  - kind: ServiceAccount\
+    name: kube-state-metrics\
+    namespace: monitoring\
+---\
+apiVersion: apps/v1\
+kind: Deployment\
+metadata:\
+  name: kube-state-metrics\
+  namespace: monitoring\
+spec:\
+  replicas: 1\
+  selector:\
+    matchLabels:\
+      app: kube-state-metrics\
+  template:\
+    metadata:\
+      labels:\
+        app: kube-state-metrics\
+    spec:\
+      serviceAccountName: kube-state-metrics\
+      containers:\
+        - name: kube-state-metrics\
+          image: k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.10.1\
+          ports:\
+            - containerPort: 8080\
+              name: http-metrics\
+---\
+apiVersion: v1\
+kind: Service\
+metadata:\
+  name: kube-state-metrics\
+  namespace: monitoring\
+spec:\
+  ports:\
+    - name: http-metrics\
+      port: 8080\
+      targetPort: 8080\
+  selector:\
+    app: kube-state-metrics}
