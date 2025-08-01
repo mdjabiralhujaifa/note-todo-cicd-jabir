@@ -1,6 +1,6 @@
 # node-todo-cicd
 Run these commands:
-#hello
+#hello oo
 #hi
 sudo apt install nodejs
 
