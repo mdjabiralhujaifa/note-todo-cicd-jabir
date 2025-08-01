@@ -66,13 +66,6 @@ pipeline {
             }
         }
 
-        stage('Docker Run') {
-            steps {
-                sh 'docker rm -f todo || true'
-                sh "docker run -d --name todo -p 3000:3000 jabiralhujaifa/todo:${BUILD_VERSION}"
-            }
-        }
-
         stage('Kubernetes') {
             steps {
                 script {
